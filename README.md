@@ -2,6 +2,13 @@
 
 A [SQLMesh](https://sqlmesh.com) engine adapter for [GizmoSQL](https://github.com/gizmodata/gizmosql) - a database server that uses DuckDB as its execution engine and exposes an Arrow Flight SQL interface for remote connections.
 
+[<img src="https://img.shields.io/badge/GitHub-gizmodata%2Fsqlmesh--gizmosql-blue.svg?logo=Github">](https://github.com/gizmodata/sqlmesh-gizmosql)
+[<img src="https://img.shields.io/badge/GitHub-gizmodata%2Fgizmosql-blue.svg?logo=Github">](https://github.com/gizmodata/gizmosql)
+[![sqlmesh-gizmosql-ci](https://github.com/gizmodata/sqlmesh-gizmosql/actions/workflows/ci.yml/badge.svg)](https://github.com/gizmodata/sqlmesh-gizmosql/actions/workflows/ci.yml)
+[![Supported Python Versions](https://img.shields.io/pypi/pyversions/sqlmesh-gizmosql)](https://pypi.org/project/sqlmesh-gizmosql/)
+[![PyPI version](https://badge.fury.io/py/sqlmesh-gizmosql.svg)](https://badge.fury.io/py/sqlmesh-gizmosql)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/sqlmesh-gizmosql.svg)](https://pypi.org/project/sqlmesh-gizmosql/)
+
 ## Installation
 
 ```bash

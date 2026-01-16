@@ -20,14 +20,15 @@ jobs:
 
     services:
       gizmosql:
-        image: gizmodata/gizmosql:latest-slim
+        image: gizmodata/gizmosql:latest
         ports:
           - 31337:31337
         env:
-          GIZMOSQL_LOG_LEVEL: info
           GIZMOSQL_USERNAME: gizmosql_username
           GIZMOSQL_PASSWORD: gizmosql_password
           DATABASE_FILENAME: /tmp/sqlmesh_test.duckdb
+          TLS_ENABLED: "1"
+          PRINT_QUERIES: "1"
 
     steps:
       - uses: actions/checkout@v4

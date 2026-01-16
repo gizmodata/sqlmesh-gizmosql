@@ -1,0 +1,72 @@
+[build-system]
+requires      = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["ibis_gizmosql"]
+
+[project]
+name = "ibis-gizmosql"
+version = "0.0.14"
+description = "An Ibis backend for GizmoSQL"
+readme = "README.md"
+authors = [{ name = "Philip Moore", email = "philip@gizmodata.com" }]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["ibis", "gizmosql", "ibis-framework", "flightsql", "duckdb", "adbc", "gizmodata"]
+dependencies = [
+  "ibis-framework==11.0.*",
+  "duckdb==1.4.*",
+  "adbc-driver-flightsql==1.10.*",
+  "pyarrow==22.0.*",
+  "pyarrow-hotfix==0.7",
+  "numpy==2.3.*",
+  "packaging==25.0",
+  "pandas==2.3.*",
+  "rich==14.2.*"
+]
+requires-python = ">=3.10"
+
+[project.entry-points."ibis.backends"]
+gizmosql = "ibis_gizmosql"
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-snapshot",
+  "pytest-mock",
+  "filelock",
+  "duckdb",
+  "dask",
+  "distributed",
+  "pins[gcs]",
+  "docker"
+]
+
+dev = [
+  "bumpver",
+  "pandas-stubs==2.3.*"
+]
+
+[project.urls]
+Homepage = "https://github.com/gizmodata/ibis-gizmosql"
+
+[tool.bumpver]
+current_version = "0.0.14"
+version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
+commit_message = "bump version {old_version} -> {new_version}"
+commit = true
+tag = true
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    '^version = "{version}"$',
+    '^current_version = "{version}"$',
+]
+"ibis_gizmosql/__init__.py" = [
+    '^__version__ = "{version}"$',
+]

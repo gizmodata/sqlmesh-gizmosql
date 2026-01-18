@@ -88,7 +88,7 @@ sqlmesh run
 
 ```bash
 # Clone the repository
-git clone https://github.com/philip/sqlmesh-gizmosql.git
+git clone https://github.com/gizmodata/sqlmesh-gizmosql.git
 cd sqlmesh-gizmosql
 
 # Install dev dependencies

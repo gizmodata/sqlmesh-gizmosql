@@ -30,6 +30,7 @@ classifiers = [
 dependencies = [
     "sqlmesh>=0.100.0",
     "adbc-driver-flightsql>=1.10.0",
+    "pyarrow>=17.0.0",
 ]
 
 [project.optional-dependencies]

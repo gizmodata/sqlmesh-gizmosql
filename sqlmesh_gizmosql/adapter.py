@@ -28,7 +28,7 @@ from sqlmesh.core.engine_adapter.shared import (
 
 if t.TYPE_CHECKING:
     from sqlmesh.core._typing import SchemaName, TableName
-    from sqlmesh.core.engine_adapter._typing import DF
+    from sqlmesh.core.engine_adapter._typing import DF, QueryOrDF
 
 
 @set_catalog(override_mapping={"_get_data_objects": CatalogSupport.REQUIRES_SET_CATALOG})
@@ -143,6 +143,51 @@ class GizmoSQLEngineAdapter(
                 this=exp.Table(this=catalog_name), kind="DATABASE", cascade=True, exists=True
             )
         )
+
+    def _ensure_schema_exists(self, table_name: TableName) -> None:
+        """Ensure the schema for a table exists, creating it if necessary.
+
+        This handles fully-qualified table names (catalog.schema.table) and
+        creates the schema in the appropriate catalog context.
+        """
+        table = exp.to_table(table_name)
+
+        if not table.db:
+            return  # No schema specified, nothing to do
+
+        # Build the schema expression with optional catalog prefix
+        # For DuckDB/GizmoSQL: CREATE SCHEMA IF NOT EXISTS [catalog.]schema
+        schema_table = exp.Table(this=exp.to_identifier(table.db))
+        if table.catalog:
+            schema_table.set("catalog", exp.to_identifier(table.catalog))
+
+        self.execute(
+            exp.Create(this=exp.Schema(this=schema_table), kind="SCHEMA", exists=True)
+        )
+
+    def create_table(
+        self,
+        table_name: TableName,
+        columns_to_types: t.Dict[str, exp.DataType],
+        primary_key: t.Optional[t.Tuple[str, ...]] = None,
+        exists: bool = True,
+        **kwargs: t.Any,
+    ) -> None:
+        """Create a table, ensuring the schema exists first."""
+        self._ensure_schema_exists(table_name)
+        super().create_table(table_name, columns_to_types, primary_key, exists, **kwargs)
+
+    def ctas(
+        self,
+        table_name: TableName,
+        query_or_df: QueryOrDF,
+        columns_to_types: t.Optional[t.Dict[str, exp.DataType]] = None,
+        exists: bool = True,
+        **kwargs: t.Any,
+    ) -> None:
+        """Create table as select, ensuring the schema exists first."""
+        self._ensure_schema_exists(table_name)
+        super().ctas(table_name, query_or_df, columns_to_types, exists, **kwargs)
 
     def _df_to_source_queries(
         self,

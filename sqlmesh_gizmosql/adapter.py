@@ -171,13 +171,14 @@ class GizmoSQLEngineAdapter(
         # Reference temp table by name only (no schema prefix for temporary tables)
         temp_table_name = exp.to_table(temp_table.name)
 
-        # Create the temporary table
-        self.create_table(
-            temp_table_name,
-            source_columns_to_types,
-            exists=False,
-            table_kind="TEMPORARY",
+        # Create the temporary table using raw SQL to ensure correct syntax
+        # DuckDB requires "CREATE TEMP TABLE" not "CREATE TEMPORARY"
+        columns_sql = ", ".join(
+            f'"{col}" {dtype.sql(dialect=self.dialect)}'
+            for col, dtype in source_columns_to_types.items()
         )
+        create_sql = f'CREATE TEMP TABLE "{temp_table.name}" ({columns_sql})'
+        self.execute(create_sql)
 
         # Insert data in batches using VALUES clause
         columns = list(source_columns_to_types.keys())

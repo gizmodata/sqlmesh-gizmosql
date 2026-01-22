@@ -155,9 +155,11 @@ class GizmoSQLEngineAdapter(
         """
         Convert a DataFrame to source queries for insertion.
 
-        Uses INSERT statements with VALUES clauses to load data into a temporary
-        table, then returns a SourceQuery that selects from it.
+        Uses ADBC bulk ingestion (adbc_ingest) for efficient Arrow-native data transfer
+        to GizmoSQL, avoiding row-by-row insertion overhead.
         """
+        import pyarrow as pa
+
         temp_table = self._get_temp_table(target_table)
 
         # Select only the source columns in the right order
@@ -168,48 +170,21 @@ class GizmoSQLEngineAdapter(
         )
         ordered_df = df[list(source_columns_to_types.keys())]
 
+        # Convert DataFrame to PyArrow Table for bulk ingestion
+        arrow_table = pa.Table.from_pandas(ordered_df)
+
+        # Use ADBC bulk ingestion with temporary table
+        # Note: DuckDB temporary tables cannot have catalog/schema prefixes,
+        # so we only pass the table name when temporary=True
+        self.cursor.adbc_ingest(
+            table_name=temp_table.name,
+            data=arrow_table,
+            mode="create",
+            temporary=True,
+        )
+
         # Reference temp table by name only (no schema prefix for temporary tables)
         temp_table_name = exp.to_table(temp_table.name)
-
-        # Create the temporary table using raw SQL to ensure correct syntax
-        # DuckDB requires "CREATE TEMP TABLE" not "CREATE TEMPORARY"
-        columns_sql = ", ".join(
-            f'"{col}" {dtype.sql(dialect=self.dialect)}'
-            for col, dtype in source_columns_to_types.items()
-        )
-        create_sql = f'CREATE TEMP TABLE "{temp_table.name}" ({columns_sql})'
-        self.execute(create_sql)
-
-        # Insert data in batches using VALUES clause
-        columns = list(source_columns_to_types.keys())
-        for i in range(0, len(ordered_df), batch_size):
-            batch = ordered_df.iloc[i : i + batch_size]
-            values = []
-            for _, row in batch.iterrows():
-                row_values = []
-                for col in columns:
-                    val = row[col]
-                    # Handle None/NaN values
-                    if val is None or (hasattr(val, "__class__") and str(val) == "nan"):
-                        row_values.append(exp.Null())
-                    elif isinstance(val, str):
-                        row_values.append(exp.Literal.string(val))
-                    elif isinstance(val, bool):
-                        row_values.append(exp.Boolean(this=val))
-                    elif isinstance(val, (int, float)):
-                        row_values.append(exp.Literal.number(val))
-                    else:
-                        # Fallback: convert to string
-                        row_values.append(exp.Literal.string(str(val)))
-                values.append(exp.Tuple(expressions=row_values))
-
-            if values:
-                insert = exp.Insert(
-                    this=temp_table_name,
-                    columns=[exp.to_identifier(c) for c in columns],
-                    expression=exp.Values(expressions=values),
-                )
-                self.execute(insert)
 
         return [
             SourceQuery(

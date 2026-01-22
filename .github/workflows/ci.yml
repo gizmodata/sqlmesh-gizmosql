@@ -29,6 +29,7 @@ jobs:
           DATABASE_FILENAME: /tmp/sqlmesh_test.duckdb
           TLS_ENABLED: "1"
           PRINT_QUERIES: "1"
+          LOG_LEVEL: debug
 
     steps:
       - uses: actions/checkout@v4

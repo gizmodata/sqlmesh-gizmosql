@@ -23,7 +23,6 @@ from sqlmesh.core.engine_adapter.shared import (
     DataObject,
     DataObjectType,
     SourceQuery,
-    set_catalog,
 )
 
 if t.TYPE_CHECKING:
@@ -31,7 +30,6 @@ if t.TYPE_CHECKING:
     from sqlmesh.core.engine_adapter._typing import DF
 
 
-@set_catalog(override_mapping={"_get_data_objects": CatalogSupport.REQUIRES_SET_CATALOG})
 class GizmoSQLEngineAdapter(
     LogicalMergeMixin,
     GetCurrentCatalogFromFunctionMixin,
@@ -150,11 +148,18 @@ class GizmoSQLEngineAdapter(
 
         This handles the case where SQLMesh tries to create a table in a schema
         that doesn't exist yet (e.g., sqlmesh__duck).
+
+        For fully-qualified table names like "catalog"."schema"."table",
+        the schema must be created in the correct catalog.
         """
         table = exp.to_table(table_name)
         if table.db:
-            # table.db contains the schema name
-            self.create_schema(table.db, ignore_if_exists=True)
+            # Build schema name with catalog if present
+            if table.catalog:
+                schema_name = f"{table.catalog}.{table.db}"
+            else:
+                schema_name = table.db
+            self.create_schema(schema_name, ignore_if_exists=True)
 
     def create_table(
         self,

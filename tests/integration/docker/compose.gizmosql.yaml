@@ -1,4 +1,21 @@
 services:
+  postgres:
+    image: postgres:16
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: ducklake_catalog
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   gizmosql:
     image: gizmodata/gizmosql:latest
     ports:
@@ -10,9 +27,15 @@ services:
       PRINT_QUERIES: "1"
       # Use a writable database file instead of the default TPC-H sample
       DATABASE_FILENAME: "/tmp/sqlmesh_test.duckdb"
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "grep -q 'GizmoSQL server - started' /proc/1/fd/1 || exit 1"]
       interval: 5s
       timeout: 30s
       retries: 10
       start_period: 10s
+
+volumes:
+  postgres_data:

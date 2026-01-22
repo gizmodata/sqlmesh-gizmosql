@@ -1,4 +1,4 @@
-.PHONY: install install-dev test unit-test integration-test docker-up docker-down clean lint format
+.PHONY: install install-dev test unit-test integration-test ducklake-test all-integration-tests docker-up docker-down clean lint format
 
 # Install the package
 install:
@@ -26,11 +26,21 @@ docker-down:
 
 # Run integration tests (requires Docker)
 integration-test: docker-up
+	pytest tests/integration/test_integration_gizmosql.py -v --tb=short
+	$(MAKE) docker-down
+
+# Run DuckLake integration tests (requires Docker with PostgreSQL)
+ducklake-test: docker-up
+	pytest tests/integration/test_integration_ducklake.py -v --tb=short
+	$(MAKE) docker-down
+
+# Run all integration tests (requires Docker with PostgreSQL)
+all-integration-tests: docker-up
 	pytest tests/integration/ -v --tb=short
 	$(MAKE) docker-down
 
 # Run all tests including integration
-all-tests: unit-test integration-test
+all-tests: unit-test all-integration-tests
 
 # Lint the code
 lint:

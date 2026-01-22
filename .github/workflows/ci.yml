@@ -19,6 +19,20 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: mysecretpassword
+          POSTGRES_DB: ducklake_catalog
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
       gizmosql:
         image: gizmodata/gizmosql:latest
         ports:
@@ -62,6 +76,8 @@ jobs:
         run: pytest -m "not integration" --tb=short
 
       - name: Run integration tests
+        env:
+          POSTGRES_HOST: postgres
         run: pytest -m "integration" --tb=short -v
 
   build:

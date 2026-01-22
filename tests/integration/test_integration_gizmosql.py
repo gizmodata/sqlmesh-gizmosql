@@ -307,3 +307,101 @@ def test_dataframe_bulk_ingestion(gizmosql_adapter: GizmoSQLEngineAdapter):
     finally:
         # Cleanup
         gizmosql_adapter.drop_schema(schema_name, ignore_if_not_exists=True, cascade=True)
+
+
+def test_create_table_in_nonexistent_schema(gizmosql_adapter: GizmoSQLEngineAdapter):
+    """Test creating a table in a schema that doesn't exist.
+
+    This tests the scenario where SQLMesh tries to create a table like:
+    CREATE TABLE "catalog"."nonexistent_schema"."table" ...
+
+    The adapter should automatically create the schema if it doesn't exist.
+    """
+    schema_name = "test_auto_create_schema"
+    table_name = f"{schema_name}.auto_created_table"
+
+    try:
+        # Ensure schema does NOT exist
+        gizmosql_adapter.drop_schema(schema_name, ignore_if_not_exists=True, cascade=True)
+
+        # Verify schema doesn't exist
+        result = gizmosql_adapter.fetchone(
+            f"SELECT schema_name FROM information_schema.schemata WHERE schema_name = '{schema_name}'"
+        )
+        assert result is None, "Schema should not exist before test"
+
+        # Create table in non-existent schema - this should auto-create the schema
+        columns_to_types = {
+            "id": exp.DataType.build("INT"),
+            "name": exp.DataType.build("VARCHAR"),
+        }
+        gizmosql_adapter.create_table(table_name, columns_to_types)
+
+        # Verify schema was auto-created
+        result = gizmosql_adapter.fetchone(
+            f"SELECT schema_name FROM information_schema.schemata WHERE schema_name = '{schema_name}'"
+        )
+        assert result is not None, "Schema should have been auto-created"
+        assert result[0] == schema_name
+
+        # Verify table exists and is usable
+        gizmosql_adapter.execute(
+            f"INSERT INTO {table_name} (id, name) VALUES (1, 'test')"
+        )
+        result = gizmosql_adapter.fetchone(f"SELECT * FROM {table_name}")
+        assert result is not None
+        assert result[0] == 1
+        assert result[1] == "test"
+
+    finally:
+        # Cleanup
+        gizmosql_adapter.drop_schema(schema_name, ignore_if_not_exists=True, cascade=True)
+
+
+def test_ctas_in_nonexistent_schema(gizmosql_adapter: GizmoSQLEngineAdapter):
+    """Test CTAS (CREATE TABLE AS SELECT) in a schema that doesn't exist.
+
+    This tests the scenario from the user error where SQLMesh generates:
+    CREATE TABLE IF NOT EXISTS "catalog"."sqlmesh__duck"."table" AS SELECT ...
+
+    The adapter should automatically create the schema if it doesn't exist.
+    """
+    schema_name = "test_ctas_auto_schema"
+    table_name = f"{schema_name}.ctas_table"
+
+    try:
+        # Ensure schema does NOT exist
+        gizmosql_adapter.drop_schema(schema_name, ignore_if_not_exists=True, cascade=True)
+
+        # Verify schema doesn't exist
+        result = gizmosql_adapter.fetchone(
+            f"SELECT schema_name FROM information_schema.schemata WHERE schema_name = '{schema_name}'"
+        )
+        assert result is None, "Schema should not exist before test"
+
+        # Use ctas to create table in non-existent schema
+        columns_to_types = {
+            "id": exp.DataType.build("INT"),
+            "value": exp.DataType.build("VARCHAR"),
+        }
+        query = exp.select(
+            exp.Literal.number(1).as_("id"),
+            exp.Literal.string("hello").as_("value"),
+        )
+        gizmosql_adapter.ctas(table_name, query, columns_to_types)
+
+        # Verify schema was auto-created
+        result = gizmosql_adapter.fetchone(
+            f"SELECT schema_name FROM information_schema.schemata WHERE schema_name = '{schema_name}'"
+        )
+        assert result is not None, "Schema should have been auto-created"
+
+        # Verify table exists with data
+        result = gizmosql_adapter.fetchone(f"SELECT * FROM {table_name}")
+        assert result is not None
+        assert result[0] == 1
+        assert result[1] == "hello"
+
+    finally:
+        # Cleanup
+        gizmosql_adapter.drop_schema(schema_name, ignore_if_not_exists=True, cascade=True)

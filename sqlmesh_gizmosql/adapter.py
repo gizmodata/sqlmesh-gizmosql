@@ -144,6 +144,66 @@ class GizmoSQLEngineAdapter(
             )
         )
 
+    def _ensure_schema_exists(self, table_name: TableName) -> None:
+        """
+        Ensures the schema for a table exists, creating it if necessary.
+
+        This handles the case where SQLMesh tries to create a table in a schema
+        that doesn't exist yet (e.g., sqlmesh__duck).
+        """
+        table = exp.to_table(table_name)
+        if table.db:
+            # table.db contains the schema name
+            self.create_schema(table.db, ignore_if_exists=True)
+
+    def create_table(
+        self,
+        table_name: TableName,
+        columns_to_types: t.Dict[str, exp.DataType],
+        primary_key: t.Optional[t.Tuple[str, ...]] = None,
+        exists: bool = True,
+        table_description: t.Optional[str] = None,
+        column_descriptions: t.Optional[t.Dict[str, str]] = None,
+        **kwargs: t.Any,
+    ) -> None:
+        """
+        Creates a table, auto-creating the schema if it doesn't exist.
+        """
+        self._ensure_schema_exists(table_name)
+        super().create_table(
+            table_name,
+            columns_to_types,
+            primary_key=primary_key,
+            exists=exists,
+            table_description=table_description,
+            column_descriptions=column_descriptions,
+            **kwargs,
+        )
+
+    def ctas(
+        self,
+        table_name: TableName,
+        query_or_df: t.Union[exp.Expression, str, t.Any],
+        columns_to_types: t.Optional[t.Dict[str, exp.DataType]] = None,
+        exists: bool = True,
+        table_description: t.Optional[str] = None,
+        column_descriptions: t.Optional[t.Dict[str, str]] = None,
+        **kwargs: t.Any,
+    ) -> None:
+        """
+        Creates a table using CTAS, auto-creating the schema if it doesn't exist.
+        """
+        self._ensure_schema_exists(table_name)
+        super().ctas(
+            table_name,
+            query_or_df,
+            columns_to_types=columns_to_types,
+            exists=exists,
+            table_description=table_description,
+            column_descriptions=column_descriptions,
+            **kwargs,
+        )
+
     def _df_to_source_queries(
         self,
         df: DF,
@@ -155,9 +215,11 @@ class GizmoSQLEngineAdapter(
         """
         Convert a DataFrame to source queries for insertion.
 
-        Uses INSERT statements with VALUES clauses to load data into a temporary
-        table, then returns a SourceQuery that selects from it.
+        Uses ADBC bulk ingestion (adbc_ingest) for efficient Arrow-native data transfer
+        to GizmoSQL, avoiding row-by-row insertion overhead.
         """
+        import pyarrow as pa
+
         temp_table = self._get_temp_table(target_table)
 
         # Select only the source columns in the right order
@@ -168,48 +230,21 @@ class GizmoSQLEngineAdapter(
         )
         ordered_df = df[list(source_columns_to_types.keys())]
 
+        # Convert DataFrame to PyArrow Table for bulk ingestion
+        arrow_table = pa.Table.from_pandas(ordered_df)
+
+        # Use ADBC bulk ingestion with temporary table
+        # Note: DuckDB temporary tables cannot have catalog/schema prefixes,
+        # so we only pass the table name when temporary=True
+        self.cursor.adbc_ingest(
+            table_name=temp_table.name,
+            data=arrow_table,
+            mode="create",
+            temporary=True,
+        )
+
         # Reference temp table by name only (no schema prefix for temporary tables)
         temp_table_name = exp.to_table(temp_table.name)
-
-        # Create the temporary table using raw SQL to ensure correct syntax
-        # DuckDB requires "CREATE TEMP TABLE" not "CREATE TEMPORARY"
-        columns_sql = ", ".join(
-            f'"{col}" {dtype.sql(dialect=self.dialect)}'
-            for col, dtype in source_columns_to_types.items()
-        )
-        create_sql = f'CREATE TEMP TABLE "{temp_table.name}" ({columns_sql})'
-        self.execute(create_sql)
-
-        # Insert data in batches using VALUES clause
-        columns = list(source_columns_to_types.keys())
-        for i in range(0, len(ordered_df), batch_size):
-            batch = ordered_df.iloc[i : i + batch_size]
-            values = []
-            for _, row in batch.iterrows():
-                row_values = []
-                for col in columns:
-                    val = row[col]
-                    # Handle None/NaN values
-                    if val is None or (hasattr(val, "__class__") and str(val) == "nan"):
-                        row_values.append(exp.Null())
-                    elif isinstance(val, str):
-                        row_values.append(exp.Literal.string(val))
-                    elif isinstance(val, bool):
-                        row_values.append(exp.Boolean(this=val))
-                    elif isinstance(val, (int, float)):
-                        row_values.append(exp.Literal.number(val))
-                    else:
-                        # Fallback: convert to string
-                        row_values.append(exp.Literal.string(str(val)))
-                values.append(exp.Tuple(expressions=row_values))
-
-            if values:
-                insert = exp.Insert(
-                    this=temp_table_name,
-                    columns=[exp.to_identifier(c) for c in columns],
-                    expression=exp.Values(expressions=values),
-                )
-                self.execute(insert)
 
         return [
             SourceQuery(

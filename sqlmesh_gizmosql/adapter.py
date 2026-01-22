@@ -144,6 +144,66 @@ class GizmoSQLEngineAdapter(
             )
         )
 
+    def _ensure_schema_exists(self, table_name: TableName) -> None:
+        """
+        Ensures the schema for a table exists, creating it if necessary.
+
+        This handles the case where SQLMesh tries to create a table in a schema
+        that doesn't exist yet (e.g., sqlmesh__duck).
+        """
+        table = exp.to_table(table_name)
+        if table.db:
+            # table.db contains the schema name
+            self.create_schema(table.db, ignore_if_exists=True)
+
+    def create_table(
+        self,
+        table_name: TableName,
+        columns_to_types: t.Dict[str, exp.DataType],
+        primary_key: t.Optional[t.Tuple[str, ...]] = None,
+        exists: bool = True,
+        table_description: t.Optional[str] = None,
+        column_descriptions: t.Optional[t.Dict[str, str]] = None,
+        **kwargs: t.Any,
+    ) -> None:
+        """
+        Creates a table, auto-creating the schema if it doesn't exist.
+        """
+        self._ensure_schema_exists(table_name)
+        super().create_table(
+            table_name,
+            columns_to_types,
+            primary_key=primary_key,
+            exists=exists,
+            table_description=table_description,
+            column_descriptions=column_descriptions,
+            **kwargs,
+        )
+
+    def ctas(
+        self,
+        table_name: TableName,
+        query_or_df: t.Union[exp.Expression, str, t.Any],
+        columns_to_types: t.Optional[t.Dict[str, exp.DataType]] = None,
+        exists: bool = True,
+        table_description: t.Optional[str] = None,
+        column_descriptions: t.Optional[t.Dict[str, str]] = None,
+        **kwargs: t.Any,
+    ) -> None:
+        """
+        Creates a table using CTAS, auto-creating the schema if it doesn't exist.
+        """
+        self._ensure_schema_exists(table_name)
+        super().ctas(
+            table_name,
+            query_or_df,
+            columns_to_types=columns_to_types,
+            exists=exists,
+            table_description=table_description,
+            column_descriptions=column_descriptions,
+            **kwargs,
+        )
+
     def _df_to_source_queries(
         self,
         df: DF,

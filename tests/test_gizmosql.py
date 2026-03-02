@@ -112,10 +112,15 @@ class TestGizmoSQLConnectionConfig:
             disable_certificate_verification=False,
         )
 
+        mock_dbapi = MagicMock()
+        mock_dbapi.connect = mock_connect
         mock_module = MagicMock()
-        mock_module.connect = mock_connect
+        mock_module.dbapi = mock_dbapi
 
-        with patch.dict("sys.modules", {"adbc_driver_gizmosql": mock_module}):
+        with patch.dict(
+            "sys.modules",
+            {"adbc_driver_gizmosql": mock_module, "adbc_driver_gizmosql.dbapi": mock_dbapi},
+        ):
             factory = config._connection_factory
             factory()
 
@@ -140,10 +145,15 @@ class TestGizmoSQLConnectionConfig:
             use_encryption=False,
         )
 
+        mock_dbapi = MagicMock()
+        mock_dbapi.connect = mock_connect
         mock_module = MagicMock()
-        mock_module.connect = mock_connect
+        mock_module.dbapi = mock_dbapi
 
-        with patch.dict("sys.modules", {"adbc_driver_gizmosql": mock_module}):
+        with patch.dict(
+            "sys.modules",
+            {"adbc_driver_gizmosql": mock_module, "adbc_driver_gizmosql.dbapi": mock_dbapi},
+        ):
             factory = config._connection_factory
             factory()
 
@@ -166,10 +176,15 @@ class TestGizmoSQLConnectionConfig:
             disable_certificate_verification=True,
         )
 
+        mock_dbapi = MagicMock()
+        mock_dbapi.connect = mock_connect
         mock_module = MagicMock()
-        mock_module.connect = mock_connect
+        mock_module.dbapi = mock_dbapi
 
-        with patch.dict("sys.modules", {"adbc_driver_gizmosql": mock_module}):
+        with patch.dict(
+            "sys.modules",
+            {"adbc_driver_gizmosql": mock_module, "adbc_driver_gizmosql.dbapi": mock_dbapi},
+        ):
             factory = config._connection_factory
             factory()
 
@@ -189,10 +204,15 @@ class TestGizmoSQLConnectionConfig:
             auth_type="external",
         )
 
+        mock_dbapi = MagicMock()
+        mock_dbapi.connect = mock_connect
         mock_module = MagicMock()
-        mock_module.connect = mock_connect
+        mock_module.dbapi = mock_dbapi
 
-        with patch.dict("sys.modules", {"adbc_driver_gizmosql": mock_module}):
+        with patch.dict(
+            "sys.modules",
+            {"adbc_driver_gizmosql": mock_module, "adbc_driver_gizmosql.dbapi": mock_dbapi},
+        ):
             factory = config._connection_factory
             factory()
 
@@ -215,10 +235,15 @@ class TestGizmoSQLConnectionConfig:
             password="pass",
         )
 
+        mock_dbapi = MagicMock()
+        mock_dbapi.connect = mock_connect
         mock_module = MagicMock()
-        mock_module.connect = mock_connect
+        mock_module.dbapi = mock_dbapi
 
-        with patch.dict("sys.modules", {"adbc_driver_gizmosql": mock_module}):
+        with patch.dict(
+            "sys.modules",
+            {"adbc_driver_gizmosql": mock_module, "adbc_driver_gizmosql.dbapi": mock_dbapi},
+        ):
             factory = config._connection_factory
             with pytest.raises(ConfigError, match="Unsupported GizmoSQL server backend"):
                 factory()

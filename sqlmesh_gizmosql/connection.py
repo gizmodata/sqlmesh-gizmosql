@@ -96,7 +96,7 @@ class GizmoSQLConnectionConfig(ConnectionConfig):
         """
         import re
 
-        from adbc_driver_gizmosql import connect as gizmosql_connect
+        from adbc_driver_gizmosql import dbapi as gizmosql
 
         def connect() -> t.Any:
             # Build the URI for the Flight SQL connection
@@ -112,7 +112,7 @@ class GizmoSQLConnectionConfig(ConnectionConfig):
             if self.use_encryption and self.disable_certificate_verification:
                 connect_kwargs["tls_skip_verify"] = True
 
-            conn = gizmosql_connect(**connect_kwargs)
+            conn = gizmosql.connect(**connect_kwargs)
 
             # Verify the backend is DuckDB - this adapter only supports the DuckDB backend
             vendor_version = conn.adbc_get_info().get("vendor_version", "")

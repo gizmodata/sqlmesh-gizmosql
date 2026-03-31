@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -22,6 +22,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/50/ed/2cc8683b1f59d5c9c82aaf8f5992b41d19e5abc90393af6b882eab072773/adbc_driver_flightsql-1.10.0-py3-none-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:9dfee1c767281c9add95fcf29eac84338107a7610b2d9b19d1169e67083a3eaa", size = 14446811, upload-time = "2026-01-09T07:11:41.532Z" },
     { url = "https://files.pythonhosted.org/packages/b3/5d/1d4c235a04b349d8d5c89e6ca42e11a6b21e6959f48b5847523e87926b4b/adbc_driver_flightsql-1.10.0-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:e6212fba5a2a59d7a2a71db1b036730908eb85457df3cc3c90563e4ddadaa923", size = 13257586, upload-time = "2026-01-09T07:11:45.63Z" },
     { url = "https://files.pythonhosted.org/packages/e7/4d/55b96339f18c3932c61bd503c477fabfb7f6c95d4fc4ceb31a1e4275d4fd/adbc_driver_flightsql-1.10.0-py3-none-win_amd64.whl", hash = "sha256:6750c1def8c782469cc33dd883f5c9598086a875432a257adf0522bb1e3b95ca", size = 14231290, upload-time = "2026-01-09T07:11:49.683Z" },
+]
+
+[[package]]
+name = "adbc-driver-gizmosql"
+version = "1.1.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "adbc-driver-flightsql" },
+    { name = "adbc-driver-manager" },
+    { name = "pyarrow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ef/ac/97f9dacb1411f27aca25c0ac3dbbaaa12bec571db21129601f6a1c0d799b/adbc_driver_gizmosql-1.1.5.tar.gz", hash = "sha256:a90cc85fc660a81e0223fbea796dfe4f2dd0d6b5040e885a0aa84528abd2cf1c", size = 24393, upload-time = "2026-03-31T14:34:16.958Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/ff/6e2f51b2981da3a65c59f7b2f57a2642dfd3cd5f77c41a9e2aa8b2e25995/adbc_driver_gizmosql-1.1.5-py3-none-any.whl", hash = "sha256:4980b7770f99462a0b6a582cdbb48730bd46589acec9d094713f0ae03aa87a84", size = 16855, upload-time = "2026-03-31T14:34:15.292Z" },
 ]
 
 [[package]]
@@ -412,7 +426,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -460,7 +474,7 @@ name = "importlib-metadata"
 version = "8.7.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f3/49/3b30cad09e7771a4982d9975a8cbf64f00d4a1ececb53297f1d9a7be1b10/importlib_metadata-8.7.1.tar.gz", hash = "sha256:49fef1ae6440c182052f407c8d34a68f72efc36db9ca90dc0113398f2fdde8bb", size = 57107, upload-time = "2025-12-21T10:00:19.278Z" }
 wheels = [
@@ -1752,11 +1766,10 @@ wheels = [
 
 [[package]]
 name = "sqlmesh-gizmosql"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
-    { name = "adbc-driver-flightsql" },
-    { name = "pyarrow" },
+    { name = "adbc-driver-gizmosql" },
     { name = "sqlmesh" },
 ]
 
@@ -1770,9 +1783,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adbc-driver-flightsql", specifier = ">=0.5.0" },
+    { name = "adbc-driver-gizmosql", specifier = ">=1.1.5" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "pyarrow", specifier = ">=12.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },

@@ -29,7 +29,7 @@ classifiers = [
 
 dependencies = [
     "sqlmesh>=0.100.0",
-    "adbc-driver-gizmosql>=1.1.3",
+    "adbc-driver-gizmosql>=1.1.5",
 ]
 
 [project.optional-dependencies]

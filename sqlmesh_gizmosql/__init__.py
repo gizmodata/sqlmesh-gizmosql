@@ -29,7 +29,7 @@ Example config.yaml:
 from sqlmesh_gizmosql.adapter import GizmoSQLEngineAdapter
 from sqlmesh_gizmosql.connection import GizmoSQLConnectionConfig
 
-__version__ = "0.2.0"
+__version__ = "0.2.2"
 __all__ = ["GizmoSQLEngineAdapter", "GizmoSQLConnectionConfig", "register", "__version__"]
 
 _registered = False

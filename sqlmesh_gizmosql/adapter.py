@@ -68,43 +68,15 @@ class GizmoSQLEngineAdapter(
     def catalog_support(self) -> CatalogSupport:
         return CatalogSupport.FULL_SUPPORT
 
-    # DDL/DML keywords that need fetch to trigger GizmoSQL's lazy execution
-    _DDL_DML_KEYWORDS = frozenset(
-        {
-            "CREATE",
-            "DROP",
-            "ALTER",
-            "TRUNCATE",
-            "RENAME",
-            "COMMENT",
-            "USE",
-            "SET",
-            "INSERT",
-            "UPDATE",
-            "DELETE",
-            "MERGE",
-            "COPY",
-            "ATTACH",
-            "DETACH",
-        }
-    )
-
     def _execute(self, sql: str, track_rows_processed: bool = False, **kwargs: t.Any) -> None:
         """
         Execute a SQL statement.
 
-        GizmoSQL uses lazy execution - statements are not actually executed
-        until results are fetched. For DDL/DML statements, we call fetchall()
-        to ensure immediate execution. For SELECT queries, we let the caller
-        fetch the results.
+        The GizmoSQL ADBC driver (>= 1.1.4) auto-detects DDL/DML statements
+        and executes them immediately via execute_update(), so no explicit
+        fetchall() is needed to trigger execution.
         """
         self.cursor.execute(sql, **kwargs)
-
-        # For DDL/DML, fetch to trigger GizmoSQL's lazy execution
-        sql_upper = sql.strip().upper()
-        first_word = sql_upper.split()[0] if sql_upper else ""
-        if first_word in self._DDL_DML_KEYWORDS:
-            self.cursor.fetchall()
 
     @contextlib.contextmanager
     def transaction(
@@ -124,17 +96,14 @@ class GizmoSQLEngineAdapter(
 
         self._connection_pool.begin()
         self.cursor.execute("BEGIN TRANSACTION")
-        self.cursor.fetchall()
         try:
             yield
         except Exception as e:
             self.cursor.execute("ROLLBACK")
-            self.cursor.fetchall()
             self._connection_pool.rollback()
             raise e
         else:
             self.cursor.execute("COMMIT")
-            self.cursor.fetchall()
             self._connection_pool.commit()
 
     def set_current_catalog(self, catalog: str) -> None:

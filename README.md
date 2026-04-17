@@ -7,7 +7,7 @@ A [SQLMesh](https://sqlmesh.com) engine adapter for [GizmoSQL](https://github.co
 [![sqlmesh-gizmosql-ci](https://github.com/gizmodata/sqlmesh-gizmosql/actions/workflows/ci.yml/badge.svg)](https://github.com/gizmodata/sqlmesh-gizmosql/actions/workflows/ci.yml)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/sqlmesh-gizmosql)](https://pypi.org/project/sqlmesh-gizmosql/)
 [![PyPI version](https://badge.fury.io/py/sqlmesh-gizmosql.svg)](https://badge.fury.io/py/sqlmesh-gizmosql)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/sqlmesh-gizmosql.svg)](https://pypi.org/project/sqlmesh-gizmosql/)
+[![PyPI Downloads](https://img.shields.io/pepy/dt/sqlmesh-gizmosql.svg)](https://pypi.org/project/sqlmesh-gizmosql/)
 
 ## Installation
 

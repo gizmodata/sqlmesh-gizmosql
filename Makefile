@@ -15,28 +15,27 @@ test: unit-test
 unit-test:
 	pytest tests/test_gizmosql.py -v
 
-# Start GizmoSQL Docker container
+# Bring up the PostgreSQL service the DuckLake tests rely on. The
+# GizmoSQL server itself is started as a subprocess by the pytest
+# fixture, so it is no longer part of compose.
 docker-up:
 	docker compose -f tests/integration/docker/compose.gizmosql.yaml up -d
-	./scripts/wait-for-gizmosql.sh
 
-# Stop GizmoSQL Docker container
 docker-down:
 	docker compose -f tests/integration/docker/compose.gizmosql.yaml down -v
 
-# Run integration tests (requires Docker)
-integration-test: docker-up
-	pytest tests/integration/test_integration_gizmosql.py -v --tb=short
-	$(MAKE) docker-down
+# Run GizmoSQL-only integration tests (no Docker required).
+integration-test:
+	pytest -m "integration and not ducklake" tests/integration/ -v --tb=short
 
-# Run DuckLake integration tests (requires Docker with PostgreSQL)
+# Run DuckLake integration tests (requires PostgreSQL via docker-up).
 ducklake-test: docker-up
-	pytest tests/integration/test_integration_ducklake.py -v --tb=short
+	pytest -m ducklake tests/integration/ -v --tb=short
 	$(MAKE) docker-down
 
-# Run all integration tests (requires Docker with PostgreSQL)
+# Run all integration tests (requires PostgreSQL via docker-up).
 all-integration-tests: docker-up
-	pytest tests/integration/ -v --tb=short
+	pytest -m integration tests/integration/ -v --tb=short
 	$(MAKE) docker-down
 
 # Run all tests including integration

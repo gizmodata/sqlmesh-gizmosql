@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sqlmesh-gizmosql"
-version = "0.2.3"
+version = "0.2.4"
 description = "GizmoSQL engine adapter for SQLMesh"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -28,8 +28,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "sqlmesh>=0.232.0",
-    "adbc-driver-gizmosql>=1.1.5",
+    "sqlmesh>=0.234.0",
+    "adbc-driver-gizmosql>=1.1.6",
 ]
 
 [project.optional-dependencies]
@@ -38,6 +38,7 @@ dev = [
     "pytest-cov>=4.0.0",
     "mypy>=1.0.0",
     "ruff>=0.1.0",
+    "gizmosql>=1.26.0",
 ]
 
 [project.urls]
@@ -54,8 +55,7 @@ python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short -m 'not integration'"
 markers = [
-    "integration: marks tests as integration tests (require Docker)",
-    "docker: marks tests that require Docker",
+    "integration: marks tests as integration tests",
     "ducklake: marks tests that require DuckLake extension and PostgreSQL",
 ]
 

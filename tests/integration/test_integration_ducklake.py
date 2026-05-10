@@ -1,15 +1,13 @@
 """Integration tests for GizmoSQL with DuckLake and multi-catalog support.
 
-These tests require:
-1. A running GizmoSQL server with DuckDB backend
-2. PostgreSQL 16 running for DuckLake metadata storage
+These tests require PostgreSQL 16 reachable at
+``$POSTGRES_HOST:$POSTGRES_PORT`` for DuckLake metadata storage. The
+GizmoSQL server itself is started as a subprocess by the shared
+``gizmosql_adapter`` fixture in ``conftest.py``.
 
-They are marked with the 'integration', 'docker', and 'ducklake' pytest markers.
-
-To run:
-    1. Start services: docker compose -f tests/integration/docker/compose.gizmosql.yaml up -d
-    2. Wait for them: ./scripts/wait-for-gizmosql.sh
-    3. Run tests: pytest tests/integration/test_integration_ducklake.py -v
+To run locally:
+    1. Bring up PostgreSQL: ``docker compose -f tests/integration/docker/compose.gizmosql.yaml up -d``
+    2. Run: ``pytest -m ducklake tests/integration/test_integration_ducklake.py -v``
 """
 
 import typing as t
@@ -17,41 +15,9 @@ import typing as t
 import pytest
 from sqlglot import exp
 
-from sqlmesh_gizmosql import GizmoSQLConnectionConfig, GizmoSQLEngineAdapter
+from sqlmesh_gizmosql import GizmoSQLEngineAdapter
 
-pytestmark = [pytest.mark.integration, pytest.mark.docker, pytest.mark.ducklake]
-
-
-@pytest.fixture(scope="module")
-def gizmosql_config() -> GizmoSQLConnectionConfig:
-    """Create a GizmoSQL connection config for testing.
-
-    Environment variables can override defaults:
-    - GIZMOSQL_HOST: hostname (default: localhost)
-    - GIZMOSQL_PORT: port (default: 31337)
-    - GIZMOSQL_USERNAME: username (default: gizmosql_user)
-    - GIZMOSQL_PASSWORD: password (default: gizmosql_password)
-    """
-    import os
-
-    return GizmoSQLConnectionConfig(
-        host=os.environ.get("GIZMOSQL_HOST", "localhost"),
-        port=int(os.environ.get("GIZMOSQL_PORT", "31337")),
-        username=os.environ.get("GIZMOSQL_USERNAME", "gizmosql_user"),
-        password=os.environ.get("GIZMOSQL_PASSWORD", "gizmosql_password"),
-        use_encryption=True,
-        disable_certificate_verification=True,
-    )
-
-
-@pytest.fixture(scope="module")
-def gizmosql_adapter(
-    gizmosql_config: GizmoSQLConnectionConfig,
-) -> t.Generator[GizmoSQLEngineAdapter, None, None]:
-    """Create a GizmoSQL engine adapter for testing."""
-    adapter = gizmosql_config.create_engine_adapter()
-    yield adapter
-    adapter.close()
+pytestmark = [pytest.mark.integration, pytest.mark.ducklake]
 
 
 # =============================================================================

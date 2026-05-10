@@ -1,54 +1,16 @@
 """Integration tests for GizmoSQL engine adapter.
 
-These tests require a running GizmoSQL server with DuckDB backend.
-They are marked with the 'integration' and 'docker' pytest markers.
-
-To run:
-    1. Start GizmoSQL: docker compose -f tests/integration/docker/compose.gizmosql.yaml up -d
-    2. Wait for it: ./scripts/wait-for-gizmosql.sh
-    3. Run tests: pytest tests/integration/ -v
+The GizmoSQL server is started as a subprocess by the shared
+``gizmosql_adapter`` fixture in ``conftest.py``; no separate Docker step
+is required. ``pytest -m integration tests/integration/`` is enough.
 """
-
-import typing as t
 
 import pytest
 from sqlglot import exp
 
-from sqlmesh_gizmosql import GizmoSQLConnectionConfig, GizmoSQLEngineAdapter
+from sqlmesh_gizmosql import GizmoSQLEngineAdapter
 
-pytestmark = [pytest.mark.integration, pytest.mark.docker]
-
-
-@pytest.fixture(scope="session")
-def gizmosql_config() -> GizmoSQLConnectionConfig:
-    """Create a GizmoSQL connection config for testing.
-
-    Environment variables can override defaults:
-    - GIZMOSQL_HOST: hostname (default: localhost)
-    - GIZMOSQL_PORT: port (default: 31337)
-    - GIZMOSQL_USERNAME: username (default: gizmosql_user)
-    - GIZMOSQL_PASSWORD: password (default: gizmosql_password)
-    """
-    import os
-
-    return GizmoSQLConnectionConfig(
-        host=os.environ.get("GIZMOSQL_HOST", "localhost"),
-        port=int(os.environ.get("GIZMOSQL_PORT", "31337")),
-        username=os.environ.get("GIZMOSQL_USERNAME", "gizmosql_user"),
-        password=os.environ.get("GIZMOSQL_PASSWORD", "gizmosql_password"),
-        use_encryption=True,
-        disable_certificate_verification=True,
-    )
-
-
-@pytest.fixture(scope="session")
-def gizmosql_adapter(
-    gizmosql_config: GizmoSQLConnectionConfig,
-) -> t.Generator[GizmoSQLEngineAdapter, None, None]:
-    """Create a GizmoSQL engine adapter for testing."""
-    adapter = gizmosql_config.create_engine_adapter()
-    yield adapter
-    adapter.close()
+pytestmark = [pytest.mark.integration]
 
 
 def test_connection(gizmosql_adapter: GizmoSQLEngineAdapter):
